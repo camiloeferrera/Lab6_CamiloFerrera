@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -203,6 +204,7 @@ public final class Inicio extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Log In");
+        setResizable(false);
 
         jLabel1.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         jLabel1.setText("Lab#6 Camilo Ferrera");
@@ -326,32 +328,49 @@ public final class Inicio extends javax.swing.JFrame {
         } else {
             String user = tf_user.getText();
             String pass = pf_pass.getText();
-            boolean flag = false;
-            for (Usuario x : usuarios) {
-                if (user.equals(x.getUser()) && pass.equals(x.getPassword())) {
-                    flag = true;
-                    break;
+            boolean flag;
+            try {
+                flag = LogInArchivoTexto(user,pass);
+                if (flag == true) {
+                    this.setVisible(false);
+                    LimpiarRegistro();
+                    try {
+                        LeerContactos();
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Inicio.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    Mensajeria.pack();
+                    Mensajeria.setLocationRelativeTo(this);
+                    Mensajeria.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Usuario y/o Contraseña Incorrecto/s.");
                 }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Inicio.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-            if (flag == true) {
-                this.setVisible(false);
-                LimpiarRegistro();
-                try {
-                    LeerContactos();
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(Inicio.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                Mensajeria.pack();
-                Mensajeria.setLocationRelativeTo(this);
-                Mensajeria.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Usuario y/o Contraseña Incorrecto/s.");
-            }
+                           
         }
     }//GEN-LAST:event_jButton1MouseClicked
 
     private void MensajeriaWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_MensajeriaWindowClosing
+        String name = JOptionPane.showInputDialog(Mensajeria,"Ingrese nombre del archivo a guardar:");
+        FileWriter fw;
+        try {
+            fw = new FileWriter (new File ("./" + name + ".txt"),false);
+            BufferedWriter bw  = new BufferedWriter (fw);
+            
+            String s = ta_chat.getText();
+            bw.write(s);
+            bw.flush();
+            bw.close();
+            fw.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Inicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        
+        
+        JOptionPane.showMessageDialog(Mensajeria,"Chat guardado con exito en el directorio!");
         System.exit(0);
     }//GEN-LAST:event_MensajeriaWindowClosing
 
@@ -360,8 +379,31 @@ public final class Inicio extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(Mensajeria, "El mensaje no puede ir vacio.");
         } else {
             String flag = ta_chat.getText();
-            String mensaje = usuarios.get(login).getUser() + ": " + ta_mensaje.getText() +"\n";
-            String chat = flag + mensaje ;
+            String mensaje = usuarios.get(login).getUser() + ": " + ta_mensaje.getText() +"\n" + "\n";
+            String chat = flag + mensaje ;       
+            String mensajeacifrar = "";
+                
+            char tipo = CapturarTipoCifrado(ta_mensaje.getText());
+            if (tipo == '1') {
+                for (int i = 0; i < ta_mensaje.getText().length()-1; i++) {
+                    mensajeacifrar += ta_mensaje.getText().charAt(i);
+                }
+                chat += "eadyCypher: " + Cifrado1(mensajeacifrar) + "\n" + "\n";
+            } else if (tipo == '2'){
+                for (int i = 0; i < ta_mensaje.getText().length()-1; i++) {
+                    mensajeacifrar += ta_mensaje.getText().charAt(i);
+                }
+                chat += "easyCypher: " + Cifrado2(mensajeacifrar) + "\n" + "\n";
+            } else if (tipo == '3'){
+                for (int i = 0; i < ta_mensaje.getText().length()-1; i++) {
+                    mensajeacifrar += ta_mensaje.getText().charAt(i);
+                }
+                chat += "eadyCypher: " + Cifrado3(mensajeacifrar) + "\n" + "\n";
+            } else {
+                
+            }
+            
+            
             ta_chat.setText(chat);
             ta_mensaje.setText("");
         }
@@ -465,8 +507,149 @@ public final class Inicio extends javax.swing.JFrame {
             String x = sc.nextLine();
             String[] y = x.split(";");
             contactos += y[0] + "\n";
+        }        
+        ta_contactos.setText(contactos);
+    }
+    
+    public boolean LogInArchivoTexto(String user, String pass) throws FileNotFoundException{
+        boolean flag = false;
+        Scanner sc = new Scanner (new File ("./Users.txt"));
+        while (sc.hasNextLine()) {
+            String x = sc.nextLine();
+            String[] y = x.split(";");
+            if (y[1].equals(user) && y[2].equals(pass)) {
+                flag = true;
+                break;
+            }
+        } 
+        
+        return flag;
+    }
+    
+    public String Cifrado1 (String x){
+        String flag = x.toLowerCase();
+        String[] tokens = flag.split(" ");
+        String cifrado = "";
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i].length() > 3) {
+                String cons = "";
+                for (int j = 0; j < tokens[i].length(); j++) {
+                    int y = tokens[i].charAt(j);
+                    if (y!= 97 && y!= 101 && y != 105 && y!= 111 && y != 117) {
+                        cons += tokens[i].charAt(j);
+                    } else {
+                        break;
+                    }
+                }
+                tokens[i] = tokens[i].replaceAll(cons, "");
+                tokens[i] += cons + "ay";
+                cifrado+= tokens[i];
+                         
+            } else {
+                cifrado += tokens[i] + "way";
+            }
+            
+            if (i!= tokens.length-1) {
+                cifrado += " ";
+            }
         }
         
-        ta_contactos.setText(contactos);
+        return cifrado;
+    }
+    public String Cifrado2 (String x){
+        x = x.replaceAll(" ","");
+        String mensaje = "";
+        for (int i = 0; i < x.length(); i++) {
+            int y = x.charAt(i);
+            mensaje += y;
+            if (i != x.length()-1) {
+                mensaje += " ";
+            }
+        }
+        
+        return mensaje;
+    }
+    
+    public void Cifrado4 (String x, String palabraclave){
+        char[][] matriz = new char [(x.length()/palabraclave.length()) + 1][palabraclave.length()];
+        int cont = 0;
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                if (i == 0) {
+                    matriz [i][j] = palabraclave.charAt(j);
+                } else {
+                    if (cont >= x.length()) {
+                        matriz[i][j] = ' ';
+                    } else {
+                        matriz[i][j] = x.charAt(cont);
+                    }
+                    cont++;
+                }
+            }
+        }
+        
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                System.out.print("[" + matriz[i][j] + "] ");
+            }
+            System.out.println();
+        }
+        
+        
+        System.out.println();
+        for (int i = 0; i < matriz.length-1; i++){
+            for (int j = 0; j < matriz.length; j++){
+                if (matriz[0][j] < matriz [0][j+1]) {
+                    char[] temp = matriz [j+1];
+                    matriz [j+1] = matriz[j];
+                    matriz [j] = temp;
+                }
+            }
+            
+        }
+        
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                System.out.print("[" + matriz[i][j] + "] ");
+            }
+            System.out.println();
+        }
+               
+    }
+    
+    public String Cifrado3(String x){
+        x = x.toLowerCase();
+        String abc1 = "";
+        for (int i = 97; i < 110; i++) {
+            abc1 += (char)i;
+        }
+        
+        String abc2 = "";
+        for (int i = 122; i > 109; i--) {
+            abc2 += (char)i;
+        }
+        
+        String cifrado = "";
+        for (int i = 0; i < x.length(); i++) {
+            for (int j = 0; j < abc1.length(); j++) {
+                if (x.charAt(i) == abc1.charAt(j)) {
+                    cifrado += abc2.charAt(j);
+                }
+            }
+            for (int j = 0; j < abc2.length(); j++) {
+                if (x.charAt(i) == abc2.charAt(j)) {
+                    cifrado += abc1.charAt(j);
+                }
+            }
+            
+            if (x.charAt(i) == ' ') {
+                cifrado += ' ';
+            }
+        }
+        
+        return cifrado;
+    }
+    public char CapturarTipoCifrado(String mensaje){
+        return mensaje.charAt(mensaje.length()-1);
     }
 }
