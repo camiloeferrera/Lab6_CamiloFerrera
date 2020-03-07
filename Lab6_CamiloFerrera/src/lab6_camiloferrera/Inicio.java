@@ -18,6 +18,8 @@ public final class Inicio extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         usuarios.add(new Usuario ("Camilo Ferrera","cferrera","java123",19));
+        usuarios.add(new Usuario ("Andrea Mendoza","andreaj","java123",21));
+        usuarios.add(new Usuario ("Osman Mejia","omejia","java123",42));
         EscribirArchivoTexto();
     }
 
